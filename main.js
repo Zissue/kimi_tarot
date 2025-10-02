@@ -490,22 +490,19 @@ class TarotUI {
         cards.forEach((card, index) => {
             setTimeout(() => {
                 const cardElement = this.createCardElement(card);
-                cardElement.style.opacity = '0';
                 readingArea.appendChild(cardElement);
                 
-                // Animate card appearance
-                setTimeout(() => {
-                    cardElement.style.transition = 'opacity 0.8s, transform 0.8s';
-                    cardElement.style.opacity = '1';
-                    cardElement.style.transform = 'translateY(0) scale(1)';
-                }, 50);
-                
-                if (index === cards.length - 1) {
-                    setTimeout(() => {
+                // Animate card appearance using simpleAnimate
+                simpleAnimate(cardElement, {
+                    opacity: [0, 1],
+                    translateY: [-50, 0],
+                    scale: [0.8, 1]
+                }, 800, () => {
+                    if (index === cards.length - 1) {
                         this.showReadingInterpretation(cards);
                         this.isAnimating = false;
-                    }, 850);
-                }
+                    }
+                });
             }, index * 300);
         });
     }
@@ -552,12 +549,11 @@ class TarotUI {
             
             interpretationDiv.style.display = 'block';
             
-            // Animate interpretation appearance
-            interpretationDiv.style.opacity = '0';
-            setTimeout(() => {
-                interpretationDiv.style.transition = 'opacity 0.8s';
-                interpretationDiv.style.opacity = '1';
-            }, 50);
+            // Animate interpretation appearance using simpleAnimate
+            simpleAnimate(interpretationDiv, {
+                opacity: [0, 1],
+                translateY: [30, 0]
+            }, 800);
         }
     }
 
@@ -590,23 +586,22 @@ class TarotUI {
         `;
 
         modal.style.display = 'flex';
-        modal.style.opacity = '0';
         
-        // Animate modal appearance
-        setTimeout(() => {
-            modal.style.transition = 'opacity 0.3s';
-            modal.style.opacity = '1';
-        }, 50);
+        // Animate modal appearance using simpleAnimate
+        simpleAnimate(modal, {
+            opacity: [0, 1]
+        }, 300);
     }
 
     closeModal() {
         const modal = document.getElementById('cardModal');
         if (modal) {
-            modal.style.transition = 'opacity 0.3s';
-            modal.style.opacity = '0';
-            setTimeout(() => {
+            // Animate modal close using simpleAnimate
+            simpleAnimate(modal, {
+                opacity: [1, 0]
+            }, 300, () => {
                 modal.style.display = 'none';
-            }, 300);
+            });
         }
     }
 
@@ -627,18 +622,22 @@ class TarotUI {
         const readingArea = document.getElementById('readingArea');
         const interpretation = document.getElementById('interpretation');
         
-        if (readingArea) {
-            Array.from(readingArea.children).forEach(child => {
-                child.style.transition = 'opacity 0.4s, transform 0.4s';
-                child.style.opacity = '0';
-                child.style.transform = 'scale(0.8)';
+        if (readingArea && readingArea.children.length > 0) {
+            // Animate each card out using simpleAnimate
+            Array.from(readingArea.children).forEach((child, index) => {
+                simpleAnimate(child, {
+                    opacity: [1, 0],
+                    scale: [1, 0.8]
+                }, 400, () => {
+                    // Only clear after last animation completes
+                    if (index === readingArea.children.length - 1) {
+                        readingArea.innerHTML = '';
+                        if (interpretation) {
+                            interpretation.style.display = 'none';
+                        }
+                    }
+                });
             });
-            setTimeout(() => {
-                readingArea.innerHTML = '';
-                if (interpretation) {
-                    interpretation.style.display = 'none';
-                }
-            }, 400);
         }
     }
 
@@ -655,13 +654,15 @@ class TarotUI {
 
     addCardHoverEffect(cardElement) {
         cardElement.addEventListener('mouseenter', () => {
-            cardElement.style.transition = 'transform 0.3s';
-            cardElement.style.transform = 'scale(1.05)';
+            simpleAnimate(cardElement, {
+                scale: 1.05
+            }, 300);
         });
 
         cardElement.addEventListener('mouseleave', () => {
-            cardElement.style.transition = 'transform 0.3s';
-            cardElement.style.transform = 'scale(1)';
+            simpleAnimate(cardElement, {
+                scale: 1
+            }, 300);
         });
     }
 
@@ -669,20 +670,23 @@ class TarotUI {
         const notification = document.createElement('div');
         notification.className = 'notification';
         notification.textContent = message;
-        notification.style.opacity = '0';
         document.body.appendChild(notification);
 
-        setTimeout(() => {
-            notification.style.transition = 'opacity 0.4s, transform 0.4s';
-            notification.style.opacity = '1';
-            notification.style.transform = 'translateY(0)';
-        }, 50);
-        
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateY(-50px)';
-            setTimeout(() => notification.remove(), 400);
-        }, 3000);
+        // Animate notification in using simpleAnimate
+        simpleAnimate(notification, {
+            opacity: [0, 1],
+            translateY: [-50, 0]
+        }, 400, () => {
+            // After 3 seconds, animate it out
+            setTimeout(() => {
+                simpleAnimate(notification, {
+                    opacity: [1, 0],
+                    translateY: [0, -50]
+                }, 400, () => {
+                    notification.remove();
+                });
+            }, 3000);
+        });
     }
 
     initializeAnimations() {
@@ -781,14 +785,14 @@ let tarotUI;
 document.addEventListener('DOMContentLoaded', () => {
     tarotUI = new TarotUI();
     
-    // Add some initial animations
+    // Add some initial animations using simpleAnimate
     const heroContent = document.querySelector('.hero-content');
     if (heroContent) {
-        heroContent.style.opacity = '0';
         setTimeout(() => {
-            heroContent.style.transition = 'opacity 1s, transform 1s';
-            heroContent.style.opacity = '1';
-            heroContent.style.transform = 'translateY(0)';
+            simpleAnimate(heroContent, {
+                opacity: [0, 1],
+                translateY: [50, 0]
+            }, 1000);
         }, 500);
     }
 });
