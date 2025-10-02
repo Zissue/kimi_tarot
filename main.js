@@ -973,7 +973,9 @@ window.saveApiKey = function() {
     const apiKey = apiKeyInput?.value.trim();
     
     if (!apiKey) {
-        alert('Please enter an API key');
+        if (tarotUI) {
+            tarotUI.showNotification('Please enter an API key');
+        }
         return;
     }
     
