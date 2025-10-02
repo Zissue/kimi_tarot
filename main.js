@@ -575,13 +575,41 @@ class TarotUI {
         
         if (!interpretationDiv) return;
         
+        // Inject spinner and loading-message CSS if not already present
+        if (!document.getElementById('tarot-spinner-style')) {
+            const style = document.createElement('style');
+            style.id = 'tarot-spinner-style';
+            style.textContent = `
+                .spinner {
+                    display: inline-block;
+                    width: 50px;
+                    height: 50px;
+                    border: 4px solid var(--accent-gold);
+                    border-top-color: transparent;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+                .loading-message {
+                    margin-top: 1rem;
+                    opacity: 0.8;
+                }
+                .interpretation-text {
+                    text-align: center;
+                    padding: 2rem;
+                }
+            `;
+            document.head.appendChild(style);
+        }
         // Show loading state
         interpretationDiv.innerHTML = `
             <div class="reading-results">
                 <h3>Your ${displayName} Reading</h3>
-                <div class="interpretation-text" style="text-align: center; padding: 2rem;">
-                    <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid var(--accent-gold); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 1rem; opacity: 0.8;">Generating personalized interpretation...</p>
+                <div class="interpretation-text">
+                    <div class="spinner"></div>
+                    <p class="loading-message">Generating personalized interpretation...</p>
                 </div>
             </div>
         `;
