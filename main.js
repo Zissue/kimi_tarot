@@ -346,7 +346,14 @@ class TarotDeck {
     }
 
     generateInterpretation(cards, spreadType) {
-        let interpretation = `Your ${spreadType} reading reveals:\n\n`;
+        const spreadNames = {
+            single: 'Single Card',
+            threeCard: 'Three Card',
+            relationship: 'Relationship',
+            celticCross: 'Celtic Cross'
+        };
+        const displayName = spreadNames[spreadType] || spreadType;
+        let interpretation = `Your ${displayName} reading reveals:\n\n`;
         
         cards.forEach((card, index) => {
             const meaning = card.isReversed ? card.reversed : card.upright;
@@ -557,10 +564,18 @@ class TarotUI {
         const interpretation = this.deck.generateInterpretation(cards, this.currentSpread);
         const interpretationDiv = document.getElementById('interpretation');
         
+        const spreadNames = {
+            single: 'Single Card',
+            threeCard: 'Three Card',
+            relationship: 'Relationship',
+            celticCross: 'Celtic Cross'
+        };
+        const displayName = spreadNames[this.currentSpread] || this.currentSpread;
+        
         if (interpretationDiv) {
             interpretationDiv.innerHTML = `
                 <div class="reading-results">
-                    <h3>Your ${this.currentSpread} Reading</h3>
+                    <h3>Your ${displayName} Reading</h3>
                     <div class="interpretation-text">${interpretation.replace(/\n/g, '<br>')}</div>
                     <div class="reading-actions">
                         <button onclick="tarotUI.saveCurrentReading()" class="save-btn">Save Reading</button>
