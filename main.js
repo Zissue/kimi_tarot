@@ -1,6 +1,54 @@
 // Art Nouveau Tarot Website - Main JavaScript
 // Complete tarot deck with meanings and functionality
 
+// Simple animation fallback when anime.js is not available
+function simpleAnimate(element, styles, duration = 500, onComplete = null) {
+    if (typeof anime !== 'undefined') {
+        // Use anime.js if available
+        const animeProps = { targets: element, duration };
+        Object.keys(styles).forEach(key => {
+            animeProps[key] = styles[key];
+        });
+        if (onComplete) {
+            animeProps.complete = onComplete;
+        }
+        anime(animeProps);
+    } else {
+        // Fallback to CSS transitions
+        if (element) {
+            // Handle transform-related properties
+            const transformProps = [
+                'translate', 'translateX', 'translateY', 'translateZ',
+                'scale', 'scaleX', 'scaleY', 'scaleZ',
+                'rotate', 'rotateX', 'rotateY', 'rotateZ',
+                'skew', 'skewX', 'skewY', 'perspective'
+            ];
+            let transformString = '';
+            Object.keys(styles).forEach(key => {
+                if (transformProps.includes(key)) {
+                    const value = Array.isArray(styles[key]) ? styles[key][1] : styles[key];
+                    transformString += `${key}(${value}) `;
+                } else {
+                    // Convert camelCase to kebab-case for CSS custom properties
+                    const cssKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+                    const value = Array.isArray(styles[key]) ? styles[key][1] : styles[key];
+                    if (cssKey in element.style) {
+                        element.style[key] = value;
+                    } else {
+                        element.style.setProperty(cssKey, value);
+                    }
+                }
+            });
+            if (transformString) {
+                element.style.transform = transformString.trim();
+            }
+            if (onComplete) {
+                setTimeout(onComplete, duration);
+            }
+        }
+    }
+}
+
 class TarotDeck {
     constructor() {
         this.cards = this.initializeDeck();
@@ -154,7 +202,7 @@ class TarotDeck {
                 suit: "cups",
                 keywords: ["new feelings", "love", "intuition", "spirituality"],
                 upright: "New feelings, love, intuition, spirituality. The Ace of Cups represents the beginning of emotional fulfillment and spiritual awakening.",
-                reversed: "Emotional loss", "blocked creativity", "emptiness",
+                reversed: "Emotional loss, blocked creativity, emptiness. The reversed Ace of Cups suggests emotional disappointment or creative blocks.",
                 element: "Water"
             },
             {
@@ -164,7 +212,7 @@ class TarotDeck {
                 suit: "cups",
                 keywords: ["friendship", "celebration", "community", "creativity"],
                 upright: "Friendship, celebration, community, creativity. The Three of Cups represents joyful connections with others and shared happiness.",
-                reversed: "Overindulgence", "gossip", "isolation",
+                reversed: "Overindulgence, gossip, isolation. The reversed Three of Cups warns of social excess or feeling disconnected from others.",
                 element: "Water"
             },
             // Wands (Fire Element)
@@ -175,7 +223,7 @@ class TarotDeck {
                 suit: "wands",
                 keywords: ["inspiration", "new opportunities", "growth", "potential"],
                 upright: "Inspiration, new opportunities, growth, potential. The Ace of Wands represents the spark of creative energy and new ventures.",
-                reversed: "Lack of motivation", "delays", "blocks",
+                reversed: "Lack of motivation, delays, blocks. The reversed Ace of Wands suggests creative blocks or missed opportunities.",
                 element: "Fire"
             },
             {
@@ -185,7 +233,7 @@ class TarotDeck {
                 suit: "wands",
                 keywords: ["speed", "action", "movement", "quick decisions"],
                 upright: "Speed, action, movement, quick decisions. The Eight of Wands represents rapid progress and swift movement toward your goals.",
-                reversed: "Delays", "frustration", "resistance",
+                reversed: "Delays, frustration, resistance. The reversed Eight of Wands suggests obstacles slowing your progress.",
                 element: "Fire"
             },
             // Swords (Air Element)
@@ -196,7 +244,7 @@ class TarotDeck {
                 suit: "swords",
                 keywords: ["clarity", "truth", "breakthrough", "new ideas"],
                 upright: "Clarity, truth, breakthrough, new ideas. The Ace of Swords represents mental clarity and the power of clear thinking.",
-                reversed: "Confusion", "misinformation", "lack of clarity",
+                reversed: "Confusion, misinformation, lack of clarity. The reversed Ace of Swords warns of mental confusion or unclear thinking.",
                 element: "Air"
             },
             {
@@ -206,7 +254,7 @@ class TarotDeck {
                 suit: "swords",
                 keywords: ["conflict", "tension", "competition", "defeat"],
                 upright: "Conflict, tension, competition, defeat. The Five of Swords represents conflict and the need to choose your battles wisely.",
-                reversed: "Reconciliation", "resolution", "compromise",
+                reversed: "Reconciliation, resolution, compromise. The reversed Five of Swords suggests moving past conflict toward peace.",
                 element: "Air"
             },
             // Pentacles (Earth Element)
@@ -217,7 +265,7 @@ class TarotDeck {
                 suit: "pentacles",
                 keywords: ["manifestation", "new financial opportunity", "abundance"],
                 upright: "Manifestation, new financial opportunity, abundance. The Ace of Pentacles represents material prosperity and new ventures.",
-                reversed: "Lost opportunity", "poor investment", "lack of planning",
+                reversed: "Lost opportunity, poor investment, lack of planning. The reversed Ace of Pentacles warns of financial setbacks or poor planning.",
                 element: "Earth"
             },
             {
@@ -227,7 +275,7 @@ class TarotDeck {
                 suit: "pentacles",
                 keywords: ["legacy", "inheritance", "family", "long-term success"],
                 upright: "Legacy, inheritance, family, long-term success. The Ten of Pentacles represents lasting wealth and family prosperity.",
-                reversed: "Family disputes", "financial failure", "instability",
+                reversed: "Family disputes, financial failure, instability. The reversed Ten of Pentacles warns of family conflicts or financial instability.",
                 element: "Earth"
             }
         ];
@@ -408,20 +456,16 @@ class TarotUI {
         this.isAnimating = true;
         const cardDeck = document.getElementById('cardDeck');
         
-        if (!cardDeck) return;
+        if (!cardDeck) {
+            this.isAnimating = false;
+            return;
+        }
 
         // Create shuffling animation
-        anime({
-            targets: cardDeck,
-            rotateY: [0, 180, 360],
-            scale: [1, 1.1, 1],
-            duration: 1500,
-            easing: 'easeInOutQuad',
-            complete: () => {
-                this.isAnimating = false;
-                this.showShuffleComplete();
-            }
-        });
+        setTimeout(() => {
+            this.isAnimating = false;
+            this.showShuffleComplete();
+        }, 1500);
 
         // Add particle effects
         this.createParticleEffect(cardDeck);
@@ -455,7 +499,10 @@ class TarotUI {
         this.isAnimating = true;
         const readingArea = document.getElementById('readingArea');
         
-        if (!readingArea) return;
+        if (!readingArea) {
+            this.isAnimating = false;
+            return;
+        }
 
         readingArea.innerHTML = '';
         
@@ -464,19 +511,15 @@ class TarotUI {
                 const cardElement = this.createCardElement(card);
                 readingArea.appendChild(cardElement);
                 
-                // Animate card appearance
-                anime({
-                    targets: cardElement,
+                // Animate card appearance using simpleAnimate
+                simpleAnimate(cardElement, {
                     opacity: [0, 1],
                     translateY: [-50, 0],
-                    scale: [0.8, 1],
-                    duration: 800,
-                    easing: 'easeOutBack',
-                    complete: () => {
-                        if (index === cards.length - 1) {
-                            this.showReadingInterpretation(cards);
-                            this.isAnimating = false;
-                        }
+                    scale: [0.8, 1]
+                }, 800, () => {
+                    if (index === cards.length - 1) {
+                        this.showReadingInterpretation(cards);
+                        this.isAnimating = false;
                     }
                 });
             }, index * 300);
@@ -525,14 +568,11 @@ class TarotUI {
             
             interpretationDiv.style.display = 'block';
             
-            // Animate interpretation appearance
-            anime({
-                targets: interpretationDiv,
+            // Animate interpretation appearance using simpleAnimate
+            simpleAnimate(interpretationDiv, {
                 opacity: [0, 1],
-                translateY: [30, 0],
-                duration: 800,
-                easing: 'easeOutQuad'
-            });
+                translateY: [30, 0]
+            }, 800);
         }
     }
 
@@ -566,26 +606,20 @@ class TarotUI {
 
         modal.style.display = 'flex';
         
-        // Animate modal appearance
-        anime({
-            targets: modal,
-            opacity: [0, 1],
-            duration: 300,
-            easing: 'easeOutQuad'
-        });
+        // Animate modal appearance using simpleAnimate
+        simpleAnimate(modal, {
+            opacity: [0, 1]
+        }, 300);
     }
 
     closeModal() {
         const modal = document.getElementById('cardModal');
         if (modal) {
-            anime({
-                targets: modal,
-                opacity: [1, 0],
-                duration: 300,
-                easing: 'easeOutQuad',
-                complete: () => {
-                    modal.style.display = 'none';
-                }
+            // Animate modal close using simpleAnimate
+            simpleAnimate(modal, {
+                opacity: [1, 0]
+            }, 300, () => {
+                modal.style.display = 'none';
             });
         }
     }
@@ -607,19 +641,21 @@ class TarotUI {
         const readingArea = document.getElementById('readingArea');
         const interpretation = document.getElementById('interpretation');
         
-        if (readingArea) {
-            anime({
-                targets: readingArea.children,
-                opacity: [1, 0],
-                scale: [1, 0.8],
-                duration: 400,
-                easing: 'easeInQuad',
-                complete: () => {
-                    readingArea.innerHTML = '';
-                    if (interpretation) {
-                        interpretation.style.display = 'none';
+        if (readingArea && readingArea.children.length > 0) {
+            // Animate each card out using simpleAnimate
+            Array.from(readingArea.children).forEach((child, index) => {
+                simpleAnimate(child, {
+                    opacity: [1, 0],
+                    scale: [1, 0.8]
+                }, 400, () => {
+                    // Only clear after last animation completes
+                    if (index === readingArea.children.length - 1) {
+                        readingArea.innerHTML = '';
+                        if (interpretation) {
+                            interpretation.style.display = 'none';
+                        }
                     }
-                }
+                });
             });
         }
     }
@@ -637,23 +673,15 @@ class TarotUI {
 
     addCardHoverEffect(cardElement) {
         cardElement.addEventListener('mouseenter', () => {
-            anime({
-                targets: cardElement,
-                scale: 1.05,
-                rotateY: 5,
-                duration: 300,
-                easing: 'easeOutQuad'
-            });
+            simpleAnimate(cardElement, {
+                scale: 1.05
+            }, 300);
         });
 
         cardElement.addEventListener('mouseleave', () => {
-            anime({
-                targets: cardElement,
-                scale: 1,
-                rotateY: 0,
-                duration: 300,
-                easing: 'easeOutQuad'
-            });
+            simpleAnimate(cardElement, {
+                scale: 1
+            }, 300);
         });
     }
 
@@ -663,24 +691,20 @@ class TarotUI {
         notification.textContent = message;
         document.body.appendChild(notification);
 
-        anime({
-            targets: notification,
+        // Animate notification in using simpleAnimate
+        simpleAnimate(notification, {
             opacity: [0, 1],
-            translateY: [-50, 0],
-            duration: 400,
-            easing: 'easeOutQuad',
-            complete: () => {
-                setTimeout(() => {
-                    anime({
-                        targets: notification,
-                        opacity: [1, 0],
-                        translateY: [0, -50],
-                        duration: 400,
-                        easing: 'easeInQuad',
-                        complete: () => notification.remove()
-                    });
-                }, 3000);
-            }
+            translateY: [-50, 0]
+        }, 400, () => {
+            // After 3 seconds, animate it out
+            setTimeout(() => {
+                simpleAnimate(notification, {
+                    opacity: [1, 0],
+                    translateY: [0, -50]
+                }, 400, () => {
+                    notification.remove();
+                });
+            }, 3000);
         });
     }
 
@@ -780,15 +804,16 @@ let tarotUI;
 document.addEventListener('DOMContentLoaded', () => {
     tarotUI = new TarotUI();
     
-    // Add some initial animations
-    anime({
-        targets: '.hero-content',
-        opacity: [0, 1],
-        translateY: [50, 0],
-        duration: 1000,
-        easing: 'easeOutQuad',
-        delay: 500
-    });
+    // Add some initial animations using simpleAnimate
+    const heroContent = document.querySelector('.hero-content');
+    if (heroContent) {
+        setTimeout(() => {
+            simpleAnimate(heroContent, {
+                opacity: [0, 1],
+                translateY: [50, 0]
+            }, 1000);
+        }, 500);
+    }
 });
 
 // Global functions for HTML onclick handlers
