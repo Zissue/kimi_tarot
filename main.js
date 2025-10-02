@@ -396,7 +396,10 @@ class TarotUI {
         // Spread selection
         document.querySelectorAll('.spread-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.selectSpread(e.target.dataset.spread);
+                const spreadBtn = e.target.closest('.spread-btn');
+                if (spreadBtn && spreadBtn.dataset.spread) {
+                    this.selectSpread(spreadBtn.dataset.spread);
+                }
             });
         });
 
