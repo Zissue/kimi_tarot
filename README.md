@@ -31,7 +31,8 @@ An immersive, mystical tarot reading web application inspired by the elegant Art
 ### 💫 Key Functionalities
 - **Card Shuffling**: Shuffle the deck before each reading
 - **Card Drawing**: Draw cards with smooth animations
-- **Reading Interpretation**: Get detailed guidance for your reading
+- **AI-Powered Interpretations**: Get personalized, insightful readings using Gemini Flash 2.5 (optional)
+- **Reading Interpretation**: Detailed guidance for your reading (traditional or AI-enhanced)
 - **Save Readings**: Store readings in browser local storage
 - **Reading History**: Review past readings and track your journey
 - **Card Library**: Browse and study all 78 tarot cards
@@ -41,6 +42,7 @@ An immersive, mystical tarot reading web application inspired by the elegant Art
 ### Prerequisites
 - A modern web browser (Chrome, Firefox, Safari, or Edge)
 - No installation or build tools required!
+- (Optional) Gemini API key for AI-powered interpretations - Get yours free at [Google AI Studio](https://makersuite.google.com/app/apikey)
 
 ### Quick Start
 
@@ -76,11 +78,18 @@ An immersive, mystical tarot reading web application inspired by the elegant Art
    ```
    Then navigate to `http://localhost:8000`
 
-3. **Start Your Reading**
+3. **Configure AI Interpretations (Optional)**
+   - Click the "⚙️ Settings" link in the navigation
+   - Enter your Gemini API key (get it free from [Google AI Studio](https://makersuite.google.com/app/apikey))
+   - Click "Save API Key"
+   - Your readings will now include personalized AI-enhanced interpretations!
+
+4. **Start Your Reading**
    - Select your spread type (Single Card is default)
+   - (Optional) Enter a question or intention
    - Click "Shuffle Cards" to shuffle the deck (optional)
    - Click "Draw Cards" to receive your reading
-   - Read your interpretation and guidance
+   - Read your personalized interpretation and guidance
    - Save your reading for later reflection
 
 ## 📖 How to Use
@@ -194,6 +203,29 @@ The application is fully responsive and optimized for:
 - Tablets (768px - 1366px)
 - Mobile phones (320px - 768px)
 
+## 🤖 AI-Powered Interpretations
+
+This application now features optional AI-powered interpretations using Google's Gemini Flash 2.5 model:
+
+### Features
+- **Personalized Readings**: Interpretations tailored to your specific questions and intentions
+- **Contextual Analysis**: Cards are analyzed together as a cohesive narrative
+- **Practical Guidance**: Actionable insights and empowering advice
+- **Privacy-Focused**: Your API key is stored locally in your browser only
+- **Fallback Support**: Automatically uses traditional interpretations if API is unavailable
+
+### Setup
+1. Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Click "⚙️ Settings" in the navigation
+3. Enter your API key and click "Save"
+4. Your readings will now be AI-enhanced!
+
+### Privacy & Security
+- Your API key is stored only in your browser's local storage
+- API calls go directly from your browser to Google's servers
+- No data is sent to our servers
+- You can remove your API key at any time through Settings
+
 ## 🌟 Future Enhancements
 
 Potential features for future development:
@@ -205,6 +237,7 @@ Potential features for future development:
 - [ ] Multiple language support
 - [ ] Audio guidance for readings
 - [ ] Customizable card decks
+- [x] AI-powered personalized interpretations ✨
 
 ## 🤝 Contributing
 

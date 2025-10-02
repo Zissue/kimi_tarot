@@ -712,6 +712,12 @@
                 gap: 0.5rem;
             }
         }
+
+        /* Loading Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -723,6 +729,7 @@
                 <li><a href="#reading" class="nav-link">Reading</a></li>
                 <li><a href="library.html" class="nav-link">Card Library</a></li>
                 <li><a href="readings.html" class="nav-link">My Readings</a></li>
+                <li><a href="#" class="nav-link" onclick="openSettings(); return false;">⚙️ Settings</a></li>
             </ul>
         </div>
     </nav>
@@ -879,6 +886,55 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeSettings()">×</button>
+            <h2 style="font-family: var(--font-display); color: var(--accent-gold); margin-bottom: 1.5rem;">⚙️ Settings</h2>
+            
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: var(--dusty-rose); margin-bottom: 1rem; font-size: 1.1rem;">🤖 AI-Powered Interpretations</h3>
+                <p style="margin-bottom: 1rem; opacity: 0.9; line-height: 1.6;">
+                    Enable personalized tarot interpretations powered by Gemini Flash 2.5. 
+                    Your readings will be more insightful and tailored to your specific questions.
+                </p>
+                
+                <div id="geminiStatus" style="padding: 0.8rem; background: rgba(114, 47, 55, 0.2); border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--accent-burgundy);">
+                    <strong>Status:</strong> <span id="geminiStatusText">Not configured</span>
+                </div>
+                
+                <label for="apiKeyInput" style="display: block; margin-bottom: 0.5rem; color: var(--dusty-rose);">
+                    Gemini API Key:
+                </label>
+                <input 
+                    type="password" 
+                    id="apiKeyInput" 
+                    placeholder="Enter your Gemini API key"
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 2px solid var(--accent-burgundy); background: rgba(45, 74, 62, 0.5); color: var(--text-ivory); font-size: 1rem; margin-bottom: 0.5rem;"
+                >
+                <small style="display: block; opacity: 0.7; margin-bottom: 1rem;">
+                    Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color: var(--accent-gold);">Google AI Studio</a>
+                </small>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="saveApiKey()" style="flex: 1; background: var(--accent-gold); color: var(--primary-bg); border: none; padding: 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Save API Key
+                    </button>
+                    <button onclick="clearApiKey()" style="flex: 1; background: var(--accent-burgundy); color: var(--text-ivory); border: none; padding: 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Clear Key
+                    </button>
+                </div>
+            </div>
+            
+            <div style="padding: 1rem; background: rgba(212, 175, 55, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-gold);">
+                <p style="font-size: 0.9rem; opacity: 0.9;">
+                    <strong>Note:</strong> Your API key is stored locally in your browser and never sent to our servers. 
+                    It's only used to connect directly to Google's Gemini API.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <p>&copy; 2024 Art Nouveau Tarot. Embrace the mystical journey within.</p>
@@ -888,6 +944,7 @@
     <div class="mystical-background"></div>
 
     <!-- Main JavaScript -->
+    <script src="gemini-service.js"></script>
     <script src="main.js"></script>
 
     <script>

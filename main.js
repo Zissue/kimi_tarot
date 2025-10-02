@@ -560,9 +560,10 @@ class TarotUI {
         return cardDiv;
     }
 
-    showReadingInterpretation(cards) {
-        const interpretation = this.deck.generateInterpretation(cards, this.currentSpread);
+    async showReadingInterpretation(cards) {
         const interpretationDiv = document.getElementById('interpretation');
+        const questionInput = document.getElementById('readingQuestion');
+        const question = questionInput ? questionInput.value.trim() : '';
         
         const spreadNames = {
             single: 'Single Card',
@@ -572,26 +573,91 @@ class TarotUI {
         };
         const displayName = spreadNames[this.currentSpread] || this.currentSpread;
         
-        if (interpretationDiv) {
-            interpretationDiv.innerHTML = `
-                <div class="reading-results">
-                    <h3>Your ${displayName} Reading</h3>
-                    <div class="interpretation-text">${interpretation.replace(/\n/g, '<br>')}</div>
-                    <div class="reading-actions">
-                        <button onclick="tarotUI.saveCurrentReading()" class="save-btn">Save Reading</button>
-                        <button onclick="tarotUI.newReading()" class="new-reading-btn">New Reading</button>
-                    </div>
-                </div>
+        if (!interpretationDiv) return;
+        
+        // Inject spinner and loading-message CSS if not already present
+        if (!document.getElementById('tarot-spinner-style')) {
+            const style = document.createElement('style');
+            style.id = 'tarot-spinner-style';
+            style.textContent = `
+                .spinner {
+                    display: inline-block;
+                    width: 50px;
+                    height: 50px;
+                    border: 4px solid var(--accent-gold);
+                    border-top-color: transparent;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+                .loading-message {
+                    margin-top: 1rem;
+                    opacity: 0.8;
+                }
+                .interpretation-text {
+                    text-align: center;
+                    padding: 2rem;
+                }
             `;
-            
-            interpretationDiv.style.display = 'block';
-            
-            // Animate interpretation appearance using simpleAnimate
-            simpleAnimate(interpretationDiv, {
-                opacity: [0, 1],
-                translateY: [30, 0]
-            }, 800);
+            document.head.appendChild(style);
         }
+        // Show loading state
+        interpretationDiv.innerHTML = `
+            <div class="reading-results">
+                <h3>Your ${displayName} Reading</h3>
+                <div class="interpretation-text">
+                    <div class="spinner"></div>
+                    <p class="loading-message">Generating personalized interpretation...</p>
+                </div>
+            </div>
+        `;
+        interpretationDiv.style.display = 'block';
+        
+        // Try to get AI-powered interpretation first
+        let interpretation;
+        let usingAI = false;
+        
+        if (geminiService.isReady()) {
+            try {
+                interpretation = await geminiService.generatePersonalizedInterpretation(
+                    cards, 
+                    this.currentSpread, 
+                    question
+                );
+                usingAI = true;
+            } catch (error) {
+                console.warn('Failed to get AI interpretation, falling back to traditional:', error);
+                interpretation = this.deck.generateInterpretation(cards, this.currentSpread);
+            }
+        } else {
+            // Fallback to traditional interpretation
+            interpretation = this.deck.generateInterpretation(cards, this.currentSpread);
+        }
+        
+        // Store the cards and interpretation for saving
+        this.currentReadingCards = cards;
+        this.currentReadingInterpretation = interpretation;
+        
+        // Display the interpretation
+        interpretationDiv.innerHTML = `
+            <div class="reading-results">
+                <h3>Your ${displayName} Reading</h3>
+                ${usingAI ? '<div style="display: inline-block; background: linear-gradient(45deg, var(--accent-gold), var(--bronze)); color: var(--primary-bg); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem;">✨ AI-Enhanced</div>' : ''}
+                <div class="interpretation-text">${interpretation.replace(/\n/g, '<br>')}</div>
+                <div class="reading-actions">
+                    <button onclick="tarotUI.saveCurrentReading()" class="save-btn">Save Reading</button>
+                    <button onclick="tarotUI.newReading()" class="new-reading-btn">New Reading</button>
+                </div>
+            </div>
+        `;
+        
+        // Animate interpretation appearance using simpleAnimate
+        simpleAnimate(interpretationDiv, {
+            opacity: [0, 1],
+            translateY: [30, 0]
+        }, 800);
     }
 
     showCardDetails(card) {
@@ -644,13 +710,28 @@ class TarotUI {
 
     saveCurrentReading() {
         const question = document.getElementById('readingQuestion')?.value || '';
-        const cards = Array.from(document.querySelectorAll('.drawn-card')).map(cardEl => {
+        
+        // Use stored cards from the current reading
+        const cards = this.currentReadingCards || Array.from(document.querySelectorAll('.drawn-card')).map(cardEl => {
             const cardName = cardEl.querySelector('h3').textContent;
             return this.deck.getCardByName(cardName);
         });
 
         if (cards.length > 0) {
-            const reading = this.deck.saveReading(cards, this.currentSpread, question);
+            // Save with the AI-generated or traditional interpretation
+            const reading = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                spreadType: this.currentSpread,
+                question,
+                cards,
+                interpretation: this.currentReadingInterpretation || this.deck.generateInterpretation(cards, this.currentSpread)
+            };
+            
+            this.deck.readingHistory.unshift(reading);
+            this.deck.readingHistory = this.deck.readingHistory.slice(0, 50);
+            localStorage.setItem('tarotReadings', JSON.stringify(this.deck.readingHistory));
+            
             this.showNotification('Reading saved to your journal!');
         }
     }
@@ -839,3 +920,110 @@ window.tarotUI = tarotUI;
 window.saveReading = () => tarotUI?.saveCurrentReading();
 window.newReading = () => tarotUI?.newReading();
 window.closeModal = () => tarotUI?.closeModal();
+
+// Settings modal functions
+window.openSettings = function() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        // Load current API key (masked)
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const currentKey = geminiService.loadApiKey();
+        if (currentKey && apiKeyInput) {
+            apiKeyInput.value = currentKey;
+        }
+        
+        // Update status
+        updateGeminiStatus();
+        
+        modal.style.display = 'flex';
+        
+        // Animate modal appearance
+        if (typeof anime !== 'undefined') {
+            anime({
+                targets: modal,
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+    }
+};
+
+window.closeSettings = function() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        if (typeof anime !== 'undefined') {
+            anime({
+                targets: modal,
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeOutQuad',
+                complete: () => {
+                    modal.style.display = 'none';
+                }
+            });
+        } else {
+            modal.style.display = 'none';
+        }
+    }
+};
+
+window.saveApiKey = function() {
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiKey = apiKeyInput?.value.trim();
+    
+    if (!apiKey) {
+        if (tarotUI) {
+            tarotUI.showNotification('Please enter an API key');
+        }
+        return;
+    }
+    
+    geminiService.saveApiKey(apiKey);
+    updateGeminiStatus();
+    
+    if (tarotUI) {
+        tarotUI.showNotification('✨ AI-powered interpretations enabled!');
+    }
+    
+    closeSettings();
+};
+
+window.clearApiKey = function() {
+    if (confirm('Are you sure you want to remove your API key? You will no longer get AI-powered interpretations.')) {
+        geminiService.clearApiKey();
+        
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        if (apiKeyInput) {
+            apiKeyInput.value = '';
+        }
+        
+        updateGeminiStatus();
+        
+        if (tarotUI) {
+            tarotUI.showNotification('API key removed');
+        }
+    }
+};
+
+function updateGeminiStatus() {
+    const statusText = document.getElementById('geminiStatusText');
+    const statusContainer = document.getElementById('geminiStatus');
+    
+    if (statusText && statusContainer) {
+        if (geminiService.isReady()) {
+            statusText.textContent = '✅ Active - AI interpretations enabled';
+            statusContainer.style.background = 'rgba(107, 142, 35, 0.2)';
+            statusContainer.style.borderLeft = '4px solid var(--olive-green)';
+        } else {
+            statusText.textContent = '❌ Not configured - Using traditional interpretations';
+            statusContainer.style.background = 'rgba(114, 47, 55, 0.2)';
+            statusContainer.style.borderLeft = '4px solid var(--accent-burgundy)';
+        }
+    }
+}
+
+// Initialize Gemini service on page load
+document.addEventListener('DOMContentLoaded', () => {
+    geminiService.loadApiKey();
+});
