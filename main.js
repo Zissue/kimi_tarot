@@ -16,13 +16,32 @@ function simpleAnimate(element, styles, duration = 500, onComplete = null) {
     } else {
         // Fallback to CSS transitions
         if (element) {
+            // Handle transform-related properties
+            const transformProps = [
+                'translate', 'translateX', 'translateY', 'translateZ',
+                'scale', 'scaleX', 'scaleY', 'scaleZ',
+                'rotate', 'rotateX', 'rotateY', 'rotateZ',
+                'skew', 'skewX', 'skewY', 'perspective'
+            ];
+            let transformString = '';
             Object.keys(styles).forEach(key => {
-                if (Array.isArray(styles[key])) {
-                    element.style[key] = styles[key][1];
+                if (transformProps.includes(key)) {
+                    const value = Array.isArray(styles[key]) ? styles[key][1] : styles[key];
+                    transformString += `${key}(${value}) `;
                 } else {
-                    element.style[key] = styles[key];
+                    // Convert camelCase to kebab-case for CSS custom properties
+                    const cssKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+                    const value = Array.isArray(styles[key]) ? styles[key][1] : styles[key];
+                    if (cssKey in element.style) {
+                        element.style[key] = value;
+                    } else {
+                        element.style.setProperty(cssKey, value);
+                    }
                 }
             });
+            if (transformString) {
+                element.style.transform = transformString.trim();
+            }
             if (onComplete) {
                 setTimeout(onComplete, duration);
             }
